@@ -94,6 +94,7 @@ class Shop
             {
                 player.AddProduct(product);
             }
+            
             player.ToPay(CostProducts());
             saleman.TakeMoney(CostProducts());
             _cart.Clear();

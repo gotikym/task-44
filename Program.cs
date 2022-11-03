@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 internal class Program
@@ -12,8 +12,8 @@ internal class Program
 
 class Shop
 {
-    Player player = new Player();
-    Salesman saleman = new Salesman();
+    private Player _player = new Player();
+    private Salesman _saleman = new Salesman();
     private List<Product> _cart = new List<Product>();
 
     public void Work()
@@ -44,11 +44,11 @@ class Shop
                     break;
 
                 case Check:
-                    player.LookBag();
+                    _player.LookBag();
                     break;
 
                 case Wallet:
-                    player.LookWallet();
+                    _player.LookWallet();
                     break;
 
                 case Exit:
@@ -64,7 +64,7 @@ class Shop
         Console.WriteLine("Выбирайте и берите то, что вам нужно или просто нравится =)");
         Product product = ChoiceProduct();
         _cart.Add(product);
-        saleman.ShiftProducts(product);
+        _saleman.ShiftProducts(product);
     }
 
     private int CostProducts()
@@ -81,28 +81,28 @@ class Shop
 
     private Product ChoiceProduct()
     {
-        saleman.ShowProducts();
+        _saleman.ShowProducts();
         Console.WriteLine("Выберите продукт");
-        return saleman.GetProduct(GetNumber());
+        return _saleman.GetProduct(GetNumber());
     }
 
     private void Sale()
     {
-        if (player.CheckSolvency(CostProducts()))
+        if (_player.CheckSolvency(CostProducts()))
         {
             foreach (Product product in _cart)
             {
-                player.AddProduct(product);
+                _player.AddProduct(product);
             }
-            
-            player.ToPay(CostProducts());
-            saleman.TakeMoney(CostProducts());
+
+            _player.ToPay(CostProducts());
+            _saleman.TakeMoney(CostProducts());
             _cart.Clear();
         }
         else
         {
             Console.WriteLine("У клиента недостаточно средств для оплаты");
-            saleman.ReturnProduct(_cart);
+            _saleman.PutProduct(_cart);
             _cart.Clear();
         }
     }
@@ -133,13 +133,13 @@ class Player
     private Random _random = new Random();
     private List<Product> _bag = new List<Product>();
     private int _money;
-    int minMoney = 250;
-    int maxMoney = 1000;
+    private int _minMoney = 250;
+    private int _maxMoney = 1000;
 
     public Player()
     {
         _bag = new List<Product>();
-        _money = _random.Next(minMoney, maxMoney);
+        _money = _random.Next(_minMoney, _maxMoney);
     }
 
     public void AddProduct(Product product)
@@ -198,7 +198,7 @@ class Salesman
         _products.Remove(product);
     }
 
-    public void ReturnProduct(List<Product> _cart)
+    public void PutProduct(List<Product> _cart)
     {
         foreach (Product product in _cart)
         {

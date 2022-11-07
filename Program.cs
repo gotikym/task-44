@@ -18,7 +18,7 @@ class Shop
 
     public void Work()
     {
-        const string Take = "take";
+        const string TakeProduct = "take";
         const string Pay = "pay";
         const string Exit = "exit";
         const string Check = "check";
@@ -28,14 +28,14 @@ class Shop
 
         while (isExit == false)
         {
-            Console.WriteLine("Взять товар: " + Take + "\nОплатить и забрать товар: " +
+            Console.WriteLine("Взять товар: " + TakeProduct + "\nОплатить и забрать товар: " +
                 Pay + "\nПосмотреть продукты в сумке: " + Check + "\nПосмотреть свои 3 копейки: " +
                 Wallet + "\nВыйти из магазина: " + Exit);
             string userChoice = Console.ReadLine();
 
             switch (userChoice)
             {
-                case Take:
+                case TakeProduct:
                     FillCart();
                     break;
 
@@ -44,7 +44,7 @@ class Shop
                     break;
 
                 case Check:
-                    _player.LookBag();
+                    _player.ShowProducts();
                     break;
 
                 case Wallet:
@@ -62,7 +62,7 @@ class Shop
     {
         Console.Clear();
         Console.WriteLine("Выбирайте и берите то, что вам нужно или просто нравится =)");
-        Product product = ChoiceProduct();
+        Product product = ChooseProduct();
         _cart.Add(product);
         _saleman.ShiftProducts(product);
     }
@@ -79,7 +79,7 @@ class Shop
         return costProducts;
     }
 
-    private Product ChoiceProduct()
+    private Product ChooseProduct()
     {
         _saleman.ShowProducts();
         Console.WriteLine("Выберите продукт");
@@ -128,102 +128,98 @@ class Shop
     }
 }
 
-class Player
+class Man
 {
-    private Random _random = new Random();
-    private List<Product> _bag = new List<Product>();
-    private int _money;
-    private int _minMoney = 250;
-    private int _maxMoney = 1000;
+    protected List<Product> inventory = new List<Product>();
+    protected int money;
 
-    public Player()
+    public Man()
     {
-        _bag = new List<Product>();
-        _money = _random.Next(_minMoney, _maxMoney);
-    }
-
-    public void AddProduct(Product product)
-    {
-        _bag.Add(product);
-    }
-
-    public void LookWallet()
-    {
-        Console.WriteLine(_money);
-    }
-
-    public void LookBag()
-    {
-        foreach (Product product in _bag)
-        {
-            Console.WriteLine(product.Name + " " + product.Description);
-        }
-    }
-
-    public bool CheckSolvency(int costProducts)
-    {
-        return _money >= costProducts;
-    }
-
-    public void ToPay(int costProducts)
-    {
-        _money -= costProducts;
-    }
-}
-
-class Salesman
-{
-    private List<Product> _products = new List<Product>();
-    private int _cashBox;
-
-    public Salesman()
-    {
-        _products = new List<Product>();
-        _cashBox = 0;
-        AddProducts();
+        money = 0;
+        inventory = new List<Product>();
     }
 
     public void ShowProducts()
     {
         int number = 0;
 
-        foreach (Product product in _products)
+        foreach (Product product in inventory)
         {
             Console.WriteLine(number++ + ": " + product.Name + " " + product.Description + " " + product.Cost);
         }
     }
+}
+
+class Player : Man
+{
+    private Random _random = new Random();
+
+    public Player()
+    {
+        int _minMoney = 250;
+        int _maxMoney = 1000;
+        money = _random.Next(_minMoney, _maxMoney);
+    }
+
+    public void AddProduct(Product product)
+    {
+        inventory.Add(product);
+    }
+
+    public void LookWallet()
+    {
+        Console.WriteLine(money);
+    }
+
+    public bool CheckSolvency(int costProducts)
+    {
+        return money >= costProducts;
+    }
+
+    public void ToPay(int costProducts)
+    {
+        money -= costProducts;
+    }
+}
+
+class Salesman : Man
+{
+    public Salesman()
+    {
+        AddProducts();
+    }
 
     public void ShiftProducts(Product product)
     {
-        _products.Remove(product);
+        inventory.Remove(product);
     }
 
     public void PutProduct(List<Product> _cart)
     {
         foreach (Product product in _cart)
         {
-            _products.Add(new Product(product.Name, product.Description, product.Cost));
+            inventory.Add(new Product(product.Name, product.Description, product.Cost));
         }
     }
 
     public Product GetProduct(int indexProduct)
     {
-        return _products[indexProduct];
+        return inventory[indexProduct];
     }
 
-    public void AddProducts()
+    private void AddProducts()
     {
-        _products.Add(new Product("яблоко", "красное, спелое, вкусное", 50));
-        _products.Add(new Product("мороженое", "Бурёнка, крем-брюле", 40));
-        _products.Add(new Product("какао", "собрано в Мордоре", 70));
-        _products.Add(new Product("мяско", "свежее, не замороженное", 170));
-        _products.Add(new Product("шампанское", "Mondoro Asti", 250));
-        _products.Add(new Product("хлеб", "черный как тьма, невидим ночью", 300));
+        inventory.Add(new Product("яблоко", "красное, спелое, вкусное", 50));
+        inventory.Add(new Product("мороженое", "Бурёнка, крем-брюле", 40));
+        inventory.Add(new Product("какао", "собрано в Мордоре", 70));
+        inventory.Add(new Product("мяско", "свежее, не замороженное", 170));
+        inventory.Add(new Product("шампанское", "Mondoro Asti", 250));
+        inventory.Add(new Product("хлеб", "черный как тьма, невидим ночью", 300));
     }
 
     public void TakeMoney(int costProducts)
     {
-        _cashBox += costProducts;
+        money += costProducts;
     }
 }
 

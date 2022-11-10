@@ -55,12 +55,12 @@ class Shop
     private void Trade()
     {
         Product product = _saleman.ChooseProduct();
-        int costProduct = _saleman.SeeCost(product);
+        int costProduct = _saleman.GetCost(product);
 
         if (_player.CheckSolvency(costProduct))
         {
             _player.Buy(costProduct, product);
-            _saleman.SaleProducts(product, costProduct);
+            _saleman.SellProduct(product, costProduct);
             Console.Clear();
         }
         else
@@ -128,19 +128,19 @@ class Salesman : Man
         AddProducts();
     }
 
-    private bool ProductAvailability()
+    private bool GetQuantity()
     {
         return Inventory.Count > 0;
     }
 
-    public int SeeCost(Product product)
+    public int GetCost(Product product)
     {
         return product.Cost;
     }
 
     public Product ChooseProduct()
     {
-        if (ProductAvailability())
+        if (GetQuantity())
         {
             ShowProducts();
             Console.WriteLine("Выберите продукт");
@@ -154,7 +154,7 @@ class Salesman : Man
         }
     }
 
-    public void SaleProducts(Product product, int costProducts)
+    public void SellProduct(Product product, int costProducts)
     {
         Inventory.Remove(product);
         Money += costProducts;

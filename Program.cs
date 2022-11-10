@@ -34,7 +34,7 @@ class Shop
             switch (userChoice)
             {
                 case Buy:
-                    Sale(ChooseProduct());
+                    Trade();
                     break;
 
                 case Check:
@@ -52,24 +52,9 @@ class Shop
         }
     }
 
-    private Product ChooseProduct()
+    private void Trade()
     {
-        if(_saleman.CheckProducts())
-        {
-            _saleman.ShowProducts();
-            Console.WriteLine("Выберите продукт");
-            return _saleman.GetProduct(GetNumber());
-        }
-        else
-        {
-            Console.WriteLine("У нас кончились продукты, приходите в другой раз");
-            Console.ReadKey();
-            return null;
-        }
-    }
-
-    private void Sale(Product product)
-    {
+        Product product = _saleman.ChooseProduct();
         int costProduct = _saleman.SeeCost(product);
 
         if (_player.CheckSolvency(costProduct))
@@ -84,44 +69,24 @@ class Shop
             Console.ReadKey();
         }
     }
-
-    private int GetNumber()
-    {
-        bool isParse = false;
-        int numberForReturn = 0;
-
-        while (isParse == false)
-        {
-            string userNumber = Console.ReadLine();
-
-            if ((isParse = int.TryParse(userNumber, out int number)) == false)
-            {
-                Console.WriteLine("Вы не корректно ввели число.");
-            }
-
-            numberForReturn = number;
-        }
-
-        return numberForReturn;
-    }
 }
 
 class Man
 {
-    protected List<Product> inventory = new List<Product>();
-    protected int money;
+    protected List<Product> Inventory = new List<Product>();
+    protected int Money;
 
     public Man()
     {
-        money = 0;
-        inventory = new List<Product>();
+        Money = 0;
+        Inventory = new List<Product>();
     }
 
     public void ShowProducts()
     {
         int number = 0;
 
-        foreach (Product product in inventory)
+        foreach (Product product in Inventory)
         {
             Console.WriteLine(number++ + ": " + product.Name + " " + product.Description + " " + product.Cost);
         }
@@ -134,25 +99,25 @@ class Player : Man
 
     public Player()
     {
-        int _minMoney = 250;
-        int _maxMoney = 1000;
-        money = _random.Next(_minMoney, _maxMoney);
+        int minMoney = 250;
+        int maxMoney = 1000;
+        Money = _random.Next(minMoney, maxMoney);
     }
 
     public void LookWallet()
     {
-        Console.WriteLine(money);
+        Console.WriteLine(Money);
     }
 
     public bool CheckSolvency(int costProducts)
     {
-        return money >= costProducts;
+        return Money >= costProducts;
     }
 
     public void Buy(int costProducts, Product product)
     {
-        money -= costProducts;
-        inventory.Add(product);
+        Money -= costProducts;
+        Inventory.Add(product);
     }
 }
 
@@ -163,45 +128,88 @@ class Salesman : Man
         AddProducts();
     }
 
-    public bool CheckProducts()
+    private bool ProductAvailability()
     {
-        return inventory.Count > 0;
+        return Inventory.Count > 0;
     }
 
     public int SeeCost(Product product)
     {
-        int costProducts = 0;
+        return product.Cost;
+    }
 
-        for(int i = 0; i < inventory.Count; i++)
+    public Product ChooseProduct()
+    {
+        if (ProductAvailability())
         {
-            if(product == inventory[i])
-            {
-                costProducts += product.Cost;
-            }
+            ShowProducts();
+            Console.WriteLine("Выберите продукт");
+            return GetProduct();
         }
-
-        return costProducts;
+        else
+        {
+            Console.WriteLine("У нас кончились продукты, приходите в другой раз");
+            Console.ReadKey();
+            return null;
+        }
     }
 
     public void SaleProducts(Product product, int costProducts)
     {
-        inventory.Remove(product);
-        money += costProducts;
+        Inventory.Remove(product);
+        Money += costProducts;
     }
 
-    public Product GetProduct(int indexProduct)
+    private Product GetProduct()
     {
-        return inventory[indexProduct];
+        int indexProduct = 0;
+        int numberProduct = Inventory.Count - 1;
+        bool isExit = false;
+
+        while (isExit == false)
+        {
+            indexProduct = GetNumber();
+
+            if (indexProduct > numberProduct)
+            {
+                Console.WriteLine("У нас нет такого продукта, выбирайте внимательней");                
+            }
+            else
+            {
+                isExit = true;                
+            }
+        }
+
+        return Inventory[indexProduct];
+    }
+
+    private int GetNumber()
+    {
+        bool isParse = false;
+        int numberForReturn = 0;
+
+        while (isParse == false)
+        {
+            string userNumber = Console.ReadLine();
+            isParse = int.TryParse(userNumber, out numberForReturn);
+
+            if (isParse == false)
+            {
+                Console.WriteLine("Вы не корректно ввели число.");
+            }
+        }
+
+        return numberForReturn;
     }
 
     private void AddProducts()
     {
-        inventory.Add(new Product("яблоко", "красное, спелое, вкусное", 50));
-        inventory.Add(new Product("мороженое", "Бурёнка, крем-брюле", 40));
-        inventory.Add(new Product("какао", "собрано в Мордоре", 70));
-        inventory.Add(new Product("мяско", "свежее, не замороженное", 170));
-        inventory.Add(new Product("шампанское", "Mondoro Asti", 250));
-        inventory.Add(new Product("хлеб", "черный как тьма, невидим ночью", 300));
+        Inventory.Add(new Product("яблоко", "красное, спелое, вкусное", 50));
+        Inventory.Add(new Product("мороженое", "Бурёнка, крем-брюле", 40));
+        Inventory.Add(new Product("какао", "собрано в Мордоре", 70));
+        Inventory.Add(new Product("мяско", "свежее, не замороженное", 170));
+        Inventory.Add(new Product("шампанское", "Mondoro Asti", 250));
+        Inventory.Add(new Product("хлеб", "черный как тьма, невидим ночью", 300));
     }
 }
 

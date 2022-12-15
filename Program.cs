@@ -5,82 +5,182 @@ internal class Program
 {
     static void Main(string[] args)
     {
-        Fight game = new Fight();
-        game.StartBattle();
+        Shop shop = new Shop();
+        shop.Work();
     }
 }
 
-class Fight
+class Shop
 {
-    public void StartBattle()
-    {
-        byte playerCount = 1;
-        string namePlayer1 = ReadName(playerCount);
-        playerCount++;
-        string namePlayer2 = ReadName(playerCount);
-        Warrior firstWarrior = ChooseWarrior(namePlayer1);
-        Warrior secondWarrior = ChooseWarrior(namePlayer2);
-        Console.WriteLine("Да начнется битва!");
+    private Player _player = new Player();
+    private Salesman _saleman = new Salesman();
 
-        while (firstWarrior.Health > 0 && secondWarrior.Health > 0)
+    public void Work()
+    {
+        const string Buy = "buy";
+        const string Exit = "exit";
+        const string Check = "check";
+        const string Wallet = "wallet";
+        bool isExit = false;
+        Console.WriteLine("Добро пожаловать в наш магазин");
+
+        while (isExit == false)
         {
-            firstWarrior.Attack(secondWarrior);
-            secondWarrior.Attack(firstWarrior);
-            ShowStats(firstWarrior);
-            ShowStats(secondWarrior);
+            Console.WriteLine("Выбрать и оплатить товар: " +
+                Buy + "\nПосмотреть продукты в сумке: " + Check + "\nПосмотреть свои 3 копейки: " +
+                Wallet + "\nВыйти из магазина: " + Exit);
+            string userChoice = Console.ReadLine();
+
+            switch (userChoice)
+            {
+                case Buy:
+                    Trade();
+                    break;
+
+                case Check:
+                    _player.ShowProducts();
+                    break;
+
+                case Wallet:
+                    _player.LookWallet();
+                    break;
+
+                case Exit:
+                    isExit = true;
+                    break;
+            }
+        }
+    }
+
+    private void Trade()
+    {
+        Product product = _saleman.ChooseProduct();
+        int costProduct = _saleman.GetCost(product);
+
+        if (_player.CheckSolvency(costProduct))
+        {
+            _player.Buy(costProduct, product);
+            _saleman.SellProduct(product, costProduct);
+            Console.Clear();
+        }
+        else
+        {
+            Console.WriteLine("У клиента недостаточно средств для оплаты\n");
             Console.ReadKey();
         }
     }
+}
 
-    private Warrior ChooseWarrior(string namePlayer)
+class Man
+{
+    protected List<Product> Inventory = new List<Product>();
+    protected int Money;
+
+    public Man()
     {
-        List<Warrior> warriors = CreateWarriors();
-        Console.WriteLine("\n" + namePlayer + " выберите бойца: ");
-        ShowWarriors(warriors);
-        int warriorIndex = GetNumber();
-        int defoltIndex = 0;
+        Money = 0;
+        Inventory = new List<Product>();
+    }
 
-        if (warriorIndex >= warriors.Count || warriorIndex < 0)
+    public void ShowProducts()
+    {
+        int number = 0;
+
+        foreach (Product product in Inventory)
         {
-            Console.WriteLine("Вы странный, ввели то, чего не было в выборе, ваш боец - воин");
-            return warriors[defoltIndex];
-        }
-
-        return warriors[warriorIndex];
-    }
-
-    private List<Warrior> CreateWarriors()
-    {
-        List<Warrior> warriors = new List<Warrior>();
-        warriors.Add(new Tank());
-        warriors.Add(new Priest());
-        warriors.Add(new Rogue());
-        warriors.Add(new Shaman());
-        warriors.Add(new Hunter());
-
-        return warriors;
-    }
-
-    private string ReadName(byte playerCount)
-    {
-        Console.WriteLine("Для старта битвы введите своё имя, игрок номер " + playerCount);
-        return Console.ReadLine();
-    }
-
-    private void ShowWarriors(List<Warrior> warriors)
-    {
-        byte idWarrior = 0;
-
-        foreach (Warrior warrior in warriors)
-        {
-            Console.Write(idWarrior++ + "  ");
-            warrior.ShowInfo();
+            Console.WriteLine(number++ + ": " + product.Name + " " + product.Description + " " + product.Cost);
         }
     }
+}
 
-    private void ShowStats(Warrior warrior)
+class Player : Man
+{
+    private Random _random = new Random();
+
+    public Player()
     {
-        Console.WriteLine(warrior.Name + " HP: " + warrior.Health);
+        int minMoney = 250;
+        int maxMoney = 1000;
+        Money = _random.Next(minMoney, maxMoney);
+    }
+
+    public void LookWallet()
+    {
+        Console.WriteLine(Money);
+    }
+
+    public bool CheckSolvency(int costProducts)
+    {
+        return Money >= costProducts;
+    }
+
+    public void Buy(int costProducts, Product product)
+    {
+        Money -= costProducts;
+        Inventory.Add(product);
+    }
+}
+
+class Salesman : Man
+{
+    public Salesman()
+    {
+        AddProducts();
+    }
+
+    private bool GetQuantity()
+    {
+        return Inventory.Count > 0;
+    }
+
+    public int GetCost(Product product)
+    {
+        return product.Cost;
+    }
+
+    public Product ChooseProduct()
+    {
+        if (GetQuantity())
+        {
+            ShowProducts();
+            Console.WriteLine("Выберите продукт");
+            return GetProduct();
+        }
+        else
+        {
+            Console.WriteLine("У нас кончились продукты, приходите в другой раз");
+            Console.ReadKey();
+            return null;
+        }
+    }
+
+    public void SellProduct(Product product, int costProducts)
+    {
+        Inventory.Remove(product);
+        Money += costProducts;
+    }
+
+    private Product GetProduct()
+    {
+        int indexProduct = 0;
+        int numberProduct = Inventory.Count - 1;
+        bool isExit = false;
+
+        while (isExit == false)
+        {
+            indexProduct = GetNumber();
+
+            if (indexProduct > numberProduct)
+            {
+                Console.WriteLine("У нас нет такого продукта, выбирайте внимательней");                
+            }
+            else
+            {
+                isExit = true;                
+            }
+        }
+
+        return Inventory[indexProduct];
     }
 
     private int GetNumber()
@@ -101,253 +201,28 @@ class Fight
 
         return numberForReturn;
     }
-}
 
-abstract class Warrior
-{
-    public string Name { get; protected set; }
-    public int Health { get; protected set; }
-    public int Armor { get; protected set; }
-    public int Damage { get; protected set; }
-    public int AttackSpeed { get; protected set; }
-
-    public Warrior()
+    private void AddProducts()
     {
-        Name = "Warrior";
-        Health = 100;
-        Armor = 15;
-        Damage = 25;
-        AttackSpeed = 1;
-    }
-
-    public virtual void TakeDamage(int damage)
-    {
-        if (Armor < damage)
-        {
-            Health -= damage - Armor;
-        }
-    }
-
-    public virtual void Attack(Warrior warrior)
-    {
-        warrior.TakeDamage(Damage);
-    }
-
-    public virtual void ShowInfo()
-    {
-        Console.WriteLine("Меня не видно, я абстрактный...");
-    }
-
-    public virtual bool GetChance(int chance)
-    {
-        Random random = new Random();
-        int minChance = 0;
-        int maxChance = 101;
-
-        return chance >= random.Next(minChance, maxChance);
+        Inventory.Add(new Product("яблоко", "красное, спелое, вкусное", 50));
+        Inventory.Add(new Product("мороженое", "Бурёнка, крем-брюле", 40));
+        Inventory.Add(new Product("какао", "собрано в Мордоре", 70));
+        Inventory.Add(new Product("мяско", "свежее, не замороженное", 170));
+        Inventory.Add(new Product("шампанское", "Mondoro Asti", 250));
+        Inventory.Add(new Product("хлеб", "черный как тьма, невидим ночью", 300));
     }
 }
 
-class Tank : Warrior
+class Product
 {
-    public Tank() : base()
+    public string Name { get; private set; }
+    public string Description { get; private set; }
+    public int Cost { get; private set; }
+
+    public Product(string name, string description, int cost)
     {
-        Damage = 35;
-        Name = "Tank";
-        Armor = 30;
-    }
-
-    public override void TakeDamage(int damage)
-    {
-        if (Armor > damage)
-        {
-            Health += damage - Armor;
-        }
-        else
-        {
-            Health -= damage - Armor;
-        }
-    }
-
-    public void Attack() { }
-
-    public override void ShowInfo()
-    {
-        Console.WriteLine("Танк, медленный и неповоротливый, но с мощной дубиной и если ваш удар слаб, ТАНК лишь поднимет свои хп =)");
-    }
-}
-
-class Priest : Warrior
-{
-    public int Mana { get; private set; }
-    public int Heal { get; private set; }
-
-    public Priest() : base()
-    {
-        Name = "Priest";
-        Armor = 10;
-        Mana = 100;
-        Heal = 30;
-    }
-
-    public override void TakeDamage(int damage)
-    {
-        int manaCostHeal = 20;
-
-        if (Armor < damage)
-        {
-            if (Mana > 0)
-            {
-                Mana -= manaCostHeal;
-                Health -= damage - Armor;
-                Health += Heal;
-            }
-            else
-            {
-                Health -= damage - Armor;
-            }
-        }
-    }
-
-    public void Attack() { }
-
-    public override void ShowInfo()
-    {
-        Console.WriteLine("Жрец, отхиливается каждый раз на " + Heal + "% за счет маны.");
-    }
-}
-
-class Rogue : Warrior
-{
-    public int LethalHitChance { get; private set; }
-    public int IvasionChance { get; private set; }
-
-    public Rogue() : base()
-    {
-        Name = "Rogue";
-        LethalHitChance = 5;
-        IvasionChance = 15;
-    }
-
-    public override void TakeDamage(int damage)
-    {
-        if (Armor < damage)
-        {
-            if (GetChance(IvasionChance))
-            {
-                Health -= damage - Armor;
-            }
-        }
-    }
-
-    public override void Attack(Warrior warrior)
-    {
-        int damage = Damage * AttackSpeed;
-        int lethalHit = 99999;
-
-        if (GetChance(LethalHitChance))
-        {
-            warrior.TakeDamage(lethalHit);
-        }
-        else
-        {
-            warrior.TakeDamage(damage);
-        }
-    }
-
-    public override void ShowInfo()
-    {
-        Console.WriteLine("Разбойник, имеет шанс в " + LethalHitChance + "% отравить быстродействующим смертельным ядом, так же шанс уклониться от атаки в " + IvasionChance + "%");
-    }
-}
-
-class Shaman : Warrior
-{
-    public int Mana { get; private set; }
-    public int AmountHealth { get; private set; }
-
-    public Shaman() : base()
-    {
-        Name = "Shaman";
-        AttackSpeed = 2;
-        Mana = 100;
-        AmountHealth = 50;
-    }
-
-    public override void TakeDamage(int damage)
-    {
-        if (Armor < damage)
-        {
-            if (Health + Armor <= damage && Mana == 100)
-            {
-                Mana = 0;
-                Health += AmountHealth;
-                Health -= damage - Armor;
-            }
-            else
-            {
-                Health -= damage - Armor;
-            }
-        }
-    }
-
-    public override void Attack(Warrior warrior)
-    {
-        int damage = Damage * AttackSpeed;
-        warrior.TakeDamage(damage);
-    }
-
-    public override void ShowInfo()
-    {
-        Console.WriteLine("Шаман, имеет изначально повышенную скорость атаки х" + AttackSpeed + ", при смертельном ударе восстанавливает себе " + AmountHealth + "% жизней за счет всей маны");
-    }
-}
-
-class Hunter : Warrior
-{
-    public int AttackSpeedBow { get; private set; }
-    public int DamageBow { get; private set; }
-    public int Distance { get; private set; }
-
-    public Hunter() : base()
-    {
-        Name = "Hunter";
-        AttackSpeedBow = 2;
-        DamageBow = 35;
-        Distance = 2;
-    }
-
-    public override void TakeDamage(int damage)
-    {
-        if (Distance > 0)
-        {
-            Distance--;
-        }
-        else
-        {
-            if (Armor < damage)
-            {
-                Health -= damage - Armor;
-            }
-        }
-    }
-
-    public override void Attack(Warrior warrior)
-    {
-        int damageBow = AttackSpeedBow * DamageBow;
-
-        if(Distance > 0)
-        {            
-            warrior.TakeDamage(damageBow);
-        }
-        else
-        {
-            warrior.TakeDamage(Damage);
-        }
-    }
-
-    public override void ShowInfo()
-    {
-        Console.WriteLine("Охотник, пока враг дойдет, охотник успеет выстрелить " + Distance * AttackSpeedBow + "раза, а после будет сражаться в ближнем бою");
+        Name = name;
+        Description = description;
+        Cost = cost;
     }
 }
